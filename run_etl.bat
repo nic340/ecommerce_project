@@ -1,0 +1,1 @@
+python C:\Users\Lenovo\Documents\ecommerce_project\etl_script.py
