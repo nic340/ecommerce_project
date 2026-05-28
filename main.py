@@ -13,8 +13,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-DATABASE_URL = os.getenv("MAIN_DB_URL", "postgresql://postgres:admin123@localhost:5432/main_db")
-engine = create_engine(DATABASE_URL)
+MAIN_DB_URL = os.getenv("MAIN_DB_URL", "postgresql://postgres:admin123@localhost:5432/main_db")
+REPORTING_DB_URL = os.getenv("REPORTING_DB_URL", "postgresql://postgres:admin123@localhost:5432/reporting_db")
+
+engine_main = create_engine(MAIN_DB_URL)
+engine_reporting = create_engine(REPORTING_DB_URL)
 
 @app.get("/")
 def read_root():
@@ -23,9 +26,19 @@ def read_root():
 @app.get("/test-db")
 def test_db():
     try:
-        with engine.connect() as connection:
+        with engine_main.connect() as connection:
             result = connection.execute(text("SELECT * FROM products"))
             products = [dict(row) for row in result.mappings()]
             return {"status": "Connected!", "data": products}
+    except Exception as e:
+        return {"status": "Error", "message": str(e)}
+
+@app.get("/reporting-db")
+def get_reporting_data():
+    try:
+        with engine_reporting.connect() as connection:
+            result = connection.execute(text("SELECT * FROM daily_sales_summary ORDER BY report_date DESC"))
+            summary = [dict(row) for row in result.mappings()]
+            return {"status": "Connected!", "data": summary}
     except Exception as e:
         return {"status": "Error", "message": str(e)}
