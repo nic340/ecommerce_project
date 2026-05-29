@@ -3,128 +3,297 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E-Commerce Admin Dashboard</title>
+    <title>Archive Premium Thrift - Storefront & Analytics</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; }
-        .container { max-width: 1100px; margin: 0 auto; }
-        .header { background-color: #1e293b; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 20px; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .card h3 { margin: 0 0 10px 0; color: #64748b; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .card p { margin: 0; font-size: 24px; font-weight: bold; color: #0f172a; }
-        .table-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
-        th { background-color: #f8fafc; color: #64748b; }
-        .status-badge { background-color: #22c55e; color: white; padding: 4px 8px; border-radius: 4px; font-size: 14px; display: inline-block; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1 style="margin:0; font-size: 28px;">E-Commerce Full-Stack Data Pipeline Dashboard</h1>
+<body class="bg-slate-950 text-slate-100 min-h-screen pb-12">
+
+    <header class="border-b border-slate-800 bg-slate-900/50 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="h-10 w-10 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                    <i class="fa-solid fa-store text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-white">Archive Shop</h1>
+                    <p class="text-xs text-slate-400">Data Engineering Final Project</p>
+                </div>
+            </div>
+
+            <div class="flex bg-slate-950 p-1.5 rounded-xl border border-slate-800">
+                <button onclick="switchTab('shop')" id="tab-shop-btn" class="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all bg-indigo-600 text-white shadow">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                    <span>🛒 Shop Storefront</span>
+                </button>
+                <button onclick="switchTab('analytics')" id="tab-analytics-btn" class="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>📊 Analytics Panel</span>
+                </button>
+            </div>
         </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 mt-8">
         
-        <div class="card-grid">
-            <div class="card">
-                <h3>System Status</h3>
-                <p id="api-status" style="color: #22c55e;">ONLINE</p>
+        <section id="shop-view" class="block">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-white tracking-tight">Available Premium Retail Items</h2>
+                <p class="text-slate-400 mt-1">Real-time functional shopping experience connecting directly to PostgreSQL main_db transaction layer.</p>
             </div>
-            <div class="card">
-                <h3>Total Revenue Generated</h3>
-                <p id="stat-revenue">₱0.00</p>
-            </div>
-            <div class="card">
-                <h3>Total Processed Orders</h3>
-                <p id="stat-orders">0</p>
-            </div>
-        </div>
 
-        <div class="table-container">
-            <h2>Available Products Inventory (Transactional DB)</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Product Name</th>
-                        <th>Price</th>
-                        <th>Stock Status</th>
-                    </tr>
-                </thead>
-                <tbody id="products-table">
-                    <tr><td colspan="4">Loading items...</td></tr>
-                </tbody>
-            </table>
-        </div>
+            <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                <div class="animate-pulse bg-slate-900 border border-slate-800 rounded-2xl h-80"></div>
+                <div class="animate-pulse bg-slate-900 border border-slate-800 rounded-2xl h-80"></div>
+                <div class="animate-pulse bg-slate-900 border border-slate-800 rounded-2xl h-80"></div>
+            </div>
+        </section>
 
-        <div class="table-container">
-            <h2>Automated Daily Sales Analytics (Reporting/Analytics DB)</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Report Date</th>
-                        <th>Total Revenue Summary</th>
-                        <th>Total Volume Orders</th>
-                    </tr>
-                </thead>
-                <tbody id="reporting-table">
-                    <tr><td colspan="3">Loading summary logs...</td></tr>
-                </tbody>
-            </table>
-        </div>
+        <section id="analytics-view" class="hidden">
+            <div class="mb-8 flex items-center justify-between">
+                <div>
+                    <h2 class="text-2xl font-bold text-white tracking-tight">Executive Control Dashboard</h2>
+                    <p class="text-slate-400 mt-1">Data pipeline aggregates synchronized out of your PostgreSQL isolated reporting_db layer.</p>
+                </div>
+                <div class="flex items-center gap-2 px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl">
+                    <div class="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                    <span class="text-sm font-bold text-slate-300" id="api-status">Server Active</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl relative overflow-hidden">
+                    <p class="text-xs font-semibold text-indigo-400 uppercase tracking-wider">Lifetime Gross Sales Revenue</p>
+                    <p class="text-4xl font-extrabold text-white mt-3" id="stat-revenue">₱0.00</p>
+                    <div class="flex items-center gap-1.5 mt-2 text-xs text-emerald-400">
+                        <i class="fa-solid fa-circle-arrow-up"></i>
+                        <span>Aggregated metrics from reporting_db</span>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl relative overflow-hidden">
+                    <p class="text-xs font-semibold text-violet-400 uppercase tracking-wider">Total Processed Volumetric Orders</p>
+                    <p class="text-4xl font-extrabold text-white mt-3" id="stat-orders">0</p>
+                    <div class="flex items-center gap-1.5 mt-2 text-xs text-violet-400">
+                        <i class="fa-solid fa-server"></i>
+                        <span>Cron pipeline data transfer checks count</span>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl relative overflow-hidden">
+                    <p class="text-xs font-semibold text-amber-400 uppercase tracking-wider">ETL Pipeline Automation Status</p>
+                    <p class="text-4xl font-extrabold text-white mt-3" id="stat-cron">ACTIVE</p>
+                    <div class="flex items-center gap-1.5 mt-2 text-xs text-amber-400">
+                        <i class="fa-solid fa-clock"></i>
+                        <span>Linux Cron Automation Task Scheduled</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+                <div class="p-6 border-b border-slate-800 bg-slate-900/50">
+                    <h3 class="text-lg font-bold text-white">Daily Summary Reports Logs</h3>
+                    <p class="text-xs text-slate-400 mt-1">Transformed transaction summaries written back by your ETL scheduling rules script.</p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-800 bg-slate-950/40">
+                                <th class="p-4 text-xs font-bold uppercase tracking-wider text-slate-400">Sync Evaluation Date</th>
+                                <th class="p-4 text-xs font-bold uppercase tracking-wider text-slate-400 text-right">Computed Total Revenue Summary</th>
+                                <th class="p-4 text-xs font-bold uppercase tracking-wider text-slate-400 text-right">Total Transferred Orders Vol</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reporting-table" class="divide-y divide-slate-800">
+                            <tr>
+                                <td colspan="3" class="p-8 text-center text-slate-500">
+                                    <i class="fa-solid fa-spinner animate-spin text-lg mr-2"></i> Loading daily performance entries...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <div id="toast" class="fixed bottom-6 right-6 px-6 py-4 rounded-xl shadow-2xl transition-all duration-300 transform translate-y-24 opacity-0 z-50 flex items-center gap-3">
+        <i id="toast-icon" class="text-lg"></i>
+        <span id="toast-message" class="text-sm font-semibold"></span>
     </div>
 
     <script>
-        async function loadDashboardData() {
+        const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://127.0.0.1:8000'
+            : window.location.origin;
+
+        const productMetadata = {
+            "Laptop": { icon: "fa-laptop", desc: "Enterprise processing workstation setup.", color: "from-blue-600/20 to-indigo-600/10" },
+            "Mouse": { icon: "fa-computer-mouse", desc: "Precision ergonomic high-grade peripheral hardware component.", color: "from-emerald-600/20 to-teal-600/10" },
+            "Keyboard": { icon: "fa-keyboard", desc: "Tactile response layout components built for engineers.", color: "from-purple-600/20 to-pink-600/10" }
+        };
+
+        function switchTab(tab) {
+            const shopBtn = document.getElementById('tab-shop-btn');
+            const analyticsBtn = document.getElementById('tab-analytics-btn');
+            const shopView = document.getElementById('shop-view');
+            const analyticsView = document.getElementById('analytics-view');
+
+            if (tab === 'shop') {
+                shopBtn.className = "flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all bg-indigo-600 text-white shadow";
+                analyticsBtn.className = "flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all text-slate-400 hover:text-white";
+                shopView.className = "block animate-fadeIn";
+                analyticsView.className = "hidden";
+                loadStoreData();
+            } else {
+                analyticsBtn.className = "flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all bg-indigo-600 text-white shadow";
+                shopBtn.className = "flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all text-slate-400 hover:text-white";
+                analyticsView.className = "block animate-fadeIn";
+                shopView.className = "hidden";
+                loadDashboardData();
+            }
+        }
+
+        function showNotification(message, type = "success") {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            const msg = document.getElementById('toast-message');
+
+            msg.innerText = message;
+            if (type === "success") {
+                toast.className = "fixed bottom-6 right-6 px-6 py-4 rounded-xl shadow-2xl transition-all duration-300 transform translate-y-0 opacity-100 z-50 flex items-center gap-3 bg-emerald-950 border border-emerald-800 text-emerald-300";
+                icon.className = "fa-solid fa-circle-check text-emerald-400";
+            } else {
+                toast.className = "fixed bottom-6 right-6 px-6 py-4 rounded-xl shadow-2xl transition-all duration-300 transform translate-y-0 opacity-100 z-50 flex items-center gap-3 bg-rose-950 border border-rose-800 text-rose-300";
+                icon.className = "fa-solid fa-circle-exclamation text-rose-400";
+            }
+
+            setTimeout(() => {
+                toast.className = "fixed bottom-6 right-6 px-6 py-4 rounded-xl shadow-2xl transition-all duration-300 transform translate-y-24 opacity-0 z-50 flex items-center gap-3";
+            }, 3000);
+        }
+
+        async function buyProduct(productId) {
             try {
-                const resProducts = await fetch('http://127.0.0.1:8000/test-db');
+                const response = await fetch(`${API_BASE_URL}/buy`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ product_id: productId, quantity: 1 })
+                });
+                const result = await response.json();
+                if (result.status === "Success") {
+                    showNotification("Order checkout success! Verified write commit logged into your main_db rows.");
+                    loadStoreData();
+                } else {
+                    showNotification("Checkout failure status: " + result.message, "error");
+                }
+            } catch (error) {
+                showNotification("Could not communicate transaction request to the FastAPI engine layer.", "error");
+            }
+        }
+
+        async function loadStoreData() {
+            try {
+                const resProducts = await fetch(`${API_BASE_URL}/test-db`);
                 const resultProducts = await resProducts.json();
                 
                 if (resultProducts.status === "Connected!") {
-                    document.getElementById('api-status').innerText = "ONLINE";
+                    const grid = document.getElementById('products-grid');
+                    grid.innerHTML = '';
                     
-                    const tbody = document.getElementById('products-table');
-                    tbody.innerHTML = '';
                     resultProducts.data.forEach(product => {
-                        tbody.innerHTML += `<tr>
-                            <td>${product.id}</td>
-                            <td>${product.name}</td>
-                            <td>₱${parseFloat(product.price).toLocaleString()}</td>
-                            <td>${product.stock} units left</td>
-                        </tr>`;
+                        const meta = productMetadata[product.name] || { icon: "fa-box", desc: "Retail collection stock.", color: "from-slate-600/20 to-slate-600/10" };
+                        const isOutOfStock = parseInt(product.stock) <= 0;
+                        
+                        grid.innerHTML += `
+                            <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden flex flex-col justify-between transition-all hover:border-slate-700">
+                                <div class="p-6 bg-gradient-to-b ${meta.color} flex flex-col items-center justify-center py-10 relative">
+                                    <div class="absolute top-4 right-4 text-xs font-semibold px-2.5 py-1 rounded-full ${isOutOfStock ? 'bg-rose-500/15 text-rose-400' : 'bg-indigo-500/15 text-indigo-400'}">
+                                        ${product.stock} items left
+                                    </div>
+                                    <i class="fa-solid ${meta.icon} text-5xl text-white my-4 drop-shadow-[0_4px_12px_rgba(255,255,255,0.1)]"></i>
+                                </div>
+                                <div class="p-6 flex-grow flex flex-col justify-between">
+                                    <div class="mb-4">
+                                        <h3 class="text-lg font-bold text-white">${product.name}</h3>
+                                        <p class="text-xs text-slate-400 mt-2">${meta.desc}</p>
+                                    </div>
+                                    <div class="flex items-center justify-between mt-auto pt-4 border-t border-slate-800">
+                                        <span class="text-xl font-extrabold text-white">₱${parseFloat(product.price).toLocaleString()}</span>
+                                        <button 
+                                            onclick="buyProduct(${product.id})" 
+                                            class="px-4 py-2.5 rounded-xl text-xs font-extrabold tracking-wide uppercase transition-all flex items-center gap-1.5 ${isOutOfStock ? 'bg-slate-800 text-slate-500 cursor-not-allowed shadow-none' : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20'}"
+                                            ${isOutOfStock ? 'disabled' : ''}
+                                        >
+                                            <i class="fa-solid fa-basket-shopping"></i>
+                                            <span>Buy Now</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
                     });
                 }
+            } catch (error) {
+                console.error("Failed fetching live inventory layout grids from transactional connections.");
+            }
+        }
 
-                const resReport = await fetch('http://127.0.0.1:8000/reporting-db');
+        async function loadDashboardData() {
+            try {
+                const resReport = await fetch(`${API_BASE_URL}/reporting-db`);
                 const resultReport = await resReport.json();
                 
                 if (resultReport.status === "Connected!") {
+                    document.getElementById('api-status').innerText = "Server Active";
+                    document.getElementById('api-status').parentElement.className = "flex items-center gap-2 px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl";
+                    
                     const tbodyReport = document.getElementById('reporting-table');
                     tbodyReport.innerHTML = '';
                     
                     let totalRevenueSum = 0;
                     let totalOrdersSum = 0;
 
-                    resultReport.data.forEach(report => {
-                        totalRevenueSum += parseFloat(report.total_revenue);
-                        totalOrdersSum += parseInt(report.total_orders);
+                    if (resultReport.data.length === 0) {
+                        tbodyReport.innerHTML = `
+                            <tr>
+                                <td colspan="3" class="p-8 text-center text-slate-500">
+                                    <i class="fa-solid fa-triangle-exclamation text-amber-500 mr-2"></i> No analytical reporting facts loaded. Trigger your pipeline process configuration scripts!
+                                </td>
+                            </tr>
+                        `;
+                    } else {
+                        resultReport.data.forEach(report => {
+                            totalRevenueSum += parseFloat(report.total_revenue);
+                            totalOrdersSum += parseInt(report.total_orders);
 
-                        tbodyReport.innerHTML += `<tr>
-                            <td>${report.report_date}</td>
-                            <td>₱${parseFloat(report.total_revenue).toLocaleString()}</td>
-                            <td>${report.total_orders} orders</td>
-                        </tr>`;
-                    });
+                            tbodyReport.innerHTML += `
+                                <tr class="hover:bg-slate-900/30 transition-all">
+                                    <td class="p-4 text-sm font-semibold text-indigo-400">${report.report_date}</td>
+                                    <td class="p-4 text-sm font-bold text-white text-right">₱${parseFloat(report.total_revenue).toLocaleString()}</td>
+                                    <td class="p-4 text-sm font-semibold text-slate-300 text-right">${report.total_orders} transactions</td>
+                                </tr>
+                            `;
+                        });
+                    }
 
                     document.getElementById('stat-revenue').innerText = `₱${totalRevenueSum.toLocaleString()}`;
                     document.getElementById('stat-orders').innerText = totalOrdersSum.toLocaleString();
                 }
             } catch (error) {
-                document.getElementById('api-status').innerText = "OFFLINE";
-                document.getElementById('api-status').style.color = "#ef4444";
+                document.getElementById('api-status').innerText = "Offline Mode";
+                document.getElementById('api-status').parentElement.className = "flex items-center gap-2 px-4 py-2 bg-rose-950/20 border border-rose-900/50 rounded-xl text-rose-400";
             }
         }
-        loadDashboardData();
+
+        loadStoreData();
     </script>
 </body>
 </html>
