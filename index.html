@@ -160,9 +160,7 @@
     </div>
 
     <script>
-        const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-            ? 'http://127.0.0.1:8000'
-            : window.location.origin;
+        const API_BASE_URL = 'http://127.0.0.1:8000';
 
         const productMetadata = {
             "Laptop": { icon: "fa-laptop", desc: "Enterprise processing workstation setup.", color: "from-blue-600/20 to-indigo-600/10" },
@@ -262,14 +260,14 @@
                     body: JSON.stringify({ product_id: productId, quantity: 1 })
                 });
                 const result = await response.json();
-                if (result.status === "Success") {
-                    showNotification("Order checkout success! Verified write commit logged into your main_db rows.");
+                if (result.status === "Success" || result.ok) {
+                    showNotification("Order checkout success! Verified write commit logged.");
                     loadStoreData();
                 } else {
                     showNotification("Checkout failure status: " + result.message, "error");
                 }
             } catch (error) {
-                showNotification("Could not communicate transaction request to the FastAPI engine layer.", "error");
+                showNotification("Could not communicate transaction request.", "error");
             }
         }
 
@@ -278,7 +276,7 @@
                 const resProducts = await fetch(`${API_BASE_URL}/test-db`);
                 const resultProducts = await resProducts.json();
                 
-                if (resultProducts.status === "Connected!") {
+                if (resultProducts.data) {
                     const grid = document.getElementById('products-grid');
                     grid.innerHTML = '';
                     
@@ -316,7 +314,7 @@
                     });
                 }
             } catch (error) {
-                console.error("Failed fetching live inventory layout grids from transactional connections.");
+                console.error("Failed fetching live inventory layout grids.");
             }
         }
 
@@ -325,7 +323,7 @@
                 const resReport = await fetch(`${API_BASE_URL}/reporting-db`);
                 const resultReport = await resReport.json();
                 
-                if (resultReport.status === "Connected!") {
+                if (resultReport.data) {
                     document.getElementById('api-status').innerText = "Server Active";
                     document.getElementById('api-status').parentElement.className = "flex items-center gap-2 px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl";
                     
@@ -335,35 +333,24 @@
                     let totalRevenueSum = 0;
                     let totalOrdersSum = 0;
 
-                    if (resultReport.data.length === 0) {
-                        tbodyReport.innerHTML = `
-                            <tr>
-                                <td colspan="3" class="p-8 text-center text-slate-500">
-                                    <i class="fa-solid fa-triangle-exclamation text-amber-500 mr-2"></i> No analytical reporting facts loaded. Trigger your pipeline process configuration scripts!
-                                </td>
+                    resultReport.data.forEach(report => {
+                        totalRevenueSum += parseFloat(report.total_revenue);
+                        totalOrdersSum += parseInt(report.total_orders);
+
+                        tbodyReport.innerHTML += `
+                            <tr class="hover:bg-slate-900/30 transition-all">
+                                <td class="p-4 text-sm font-semibold text-indigo-400">${report.report_date}</td>
+                                <td class="p-4 text-sm font-bold text-white text-right">₱${parseFloat(report.total_revenue).toLocaleString()}</td>
+                                <td class="p-4 text-sm font-semibold text-slate-300 text-right">${report.total_orders} transactions</td>
                             </tr>
                         `;
-                    } else {
-                        resultReport.data.forEach(report => {
-                            totalRevenueSum += parseFloat(report.total_revenue);
-                            totalOrdersSum += parseInt(report.total_orders);
-
-                            tbodyReport.innerHTML += `
-                                <tr class="hover:bg-slate-900/30 transition-all">
-                                    <td class="p-4 text-sm font-semibold text-indigo-400">${report.report_date}</td>
-                                    <td class="p-4 text-sm font-bold text-white text-right">₱${parseFloat(report.total_revenue).toLocaleString()}</td>
-                                    <td class="p-4 text-sm font-semibold text-slate-300 text-right">${report.total_orders} transactions</td>
-                                </tr>
-                            `;
-                        });
-                    }
+                    });
 
                     document.getElementById('stat-revenue').innerText = `₱${totalRevenueSum.toLocaleString()}`;
                     document.getElementById('stat-orders').innerText = totalOrdersSum.toLocaleString();
                 }
             } catch (error) {
-                document.getElementById('api-status').innerText = "Offline Mode";
-                document.getElementById('api-status').parentElement.className = "flex items-center gap-2 px-4 py-2 bg-rose-950/20 border border-rose-900/50 rounded-xl text-rose-400";
+                console.error("Error updating stats dashboard layout visual metrics.");
             }
         }
 
