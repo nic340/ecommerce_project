@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy import create_engine, text
@@ -18,6 +18,10 @@ class BuyRequest(BaseModel):
     product_id: int
     quantity: int
 
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
 MAIN_DB_URL = os.getenv("MAIN_DB_URL", "postgresql://postgres:admin123@localhost:5432/main_db")
 REPORTING_DB_URL = os.getenv("REPORTING_DB_URL", "postgresql://postgres:admin123@localhost:5432/reporting_db")
 
@@ -26,7 +30,13 @@ engine_reporting = create_engine(REPORTING_DB_URL)
 
 @app.get("/")
 def read_root():
-    return {"message": "Ang imong Backend buhi ug andam na!"}
+    return {"message": "Cloud Core Engine Status Online"}
+
+@app.post("/api/login")
+def login(req: LoginRequest):
+    if req.username == "admin" and req.password == "admin123":
+        return {"status": "Authenticated", "token": "session-token-secure-99"}
+    raise HTTPException(status_code=401, detail="Invalid administrator credentials")
 
 @app.get("/test-db")
 def test_db():
@@ -48,10 +58,10 @@ def buy_product(req: BuyRequest):
             ).mappings().first()
             
             if not product:
-                return {"status": "Error", "message": "Product not found"}
+                return {"status": "Error", "message": "Product records database empty"}
             
             if product["stock"] < req.quantity:
-                return {"status": "Error", "message": "Insufficient stock"}
+                return {"status": "Error", "message": "Insufficient retail inventory"}
             
             total_price = float(product["price"]) * req.quantity
             new_stock = product["stock"] - req.quantity
@@ -67,7 +77,7 @@ def buy_product(req: BuyRequest):
             )
             
             connection.commit()
-            return {"status": "Success", "message": "Kompra Malampuson!"}
+            return {"status": "Success", "message": "Transaction commit verified"}
     except Exception as e:
         return {"status": "Error", "message": str(e)}
 

@@ -55,15 +55,45 @@
             </div>
         </section>
 
+        <section id="login-view" class="hidden flex flex-col items-center justify-center py-12">
+            <div class="bg-slate-900 border border-slate-800 p-8 rounded-2xl w-full max-w-md shadow-2xl">
+                <div class="text-center mb-6">
+                    <div class="h-12 w-12 rounded-xl bg-indigo-600/10 text-indigo-400 flex items-center justify-center mx-auto mb-3">
+                        <i class="fa-solid fa-lock text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white">Admin Authentication</h3>
+                    <p class="text-xs text-slate-400 mt-1">Please log in to view protected executive analytics pipelines.</p>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Username</label>
+                        <input type="text" id="login-username" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition-all" placeholder="Enter username">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Password</label>
+                        <input type="password" id="login-password" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition-all" placeholder="Enter password">
+                    </div>
+                    <button onclick="submitLogin()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold py-3 rounded-xl transition-all shadow-lg shadow-indigo-600/20 mt-2">
+                        Verify Credentials
+                    </button>
+                </div>
+            </div>
+        </section>
+
         <section id="analytics-view" class="hidden">
             <div class="mb-8 flex items-center justify-between">
                 <div>
                     <h2 class="text-2xl font-bold text-white tracking-tight">Executive Control Dashboard</h2>
                     <p class="text-slate-400 mt-1">Data pipeline aggregates synchronized out of your PostgreSQL isolated reporting_db layer.</p>
                 </div>
-                <div class="flex items-center gap-2 px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl">
-                    <div class="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                    <span class="text-sm font-bold text-slate-300" id="api-status">Server Active</span>
+                <div class="flex items-center gap-4">
+                    <button onclick="logout()" class="text-xs bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 font-bold px-4 py-2 rounded-xl transition-all">
+                        <i class="fa-solid fa-right-from-bracket mr-1.5"></i>Logout
+                    </button>
+                    <div class="flex items-center gap-2 px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl">
+                        <div class="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                        <span class="text-sm font-bold text-slate-300" id="api-status">Server Active</span>
+                    </div>
                 </div>
             </div>
 
@@ -140,25 +170,69 @@
             "Keyboard": { icon: "fa-keyboard", desc: "Tactile response layout components built for engineers.", color: "from-purple-600/20 to-pink-600/10" }
         };
 
+        let isAuthenticated = false;
+
         function switchTab(tab) {
             const shopBtn = document.getElementById('tab-shop-btn');
             const analyticsBtn = document.getElementById('tab-analytics-btn');
             const shopView = document.getElementById('shop-view');
+            const loginView = document.getElementById('login-view');
             const analyticsView = document.getElementById('analytics-view');
 
             if (tab === 'shop') {
                 shopBtn.className = "flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all bg-indigo-600 text-white shadow";
                 analyticsBtn.className = "flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all text-slate-400 hover:text-white";
                 shopView.className = "block animate-fadeIn";
+                loginView.className = "hidden";
                 analyticsView.className = "hidden";
                 loadStoreData();
             } else {
-                analyticsBtn.className = "flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all bg-indigo-600 text-white shadow";
                 shopBtn.className = "flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all text-slate-400 hover:text-white";
-                analyticsView.className = "block animate-fadeIn";
+                analyticsBtn.className = "flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all bg-indigo-600 text-white shadow";
                 shopView.className = "hidden";
-                loadDashboardData();
+                
+                if (!isAuthenticated) {
+                    loginView.className = "flex flex-col items-center justify-center py-12 animate-fadeIn";
+                    analyticsView.className = "hidden";
+                } else {
+                    loginView.className = "hidden";
+                    analyticsView.className = "block animate-fadeIn";
+                    loadDashboardData();
+                }
             }
+        }
+
+        async function submitLogin() {
+            const userInp = document.getElementById('login-username').value;
+            const passInp = document.getElementById('login-password').value;
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: userInp, password: passInp })
+                });
+
+                if (res.ok) {
+                    isAuthenticated = true;
+                    showNotification("Credentials verified. Granted secure panel access layer.");
+                    document.getElementById('login-view').className = "hidden";
+                    document.getElementById('analytics-view').className = "block animate-fadeIn";
+                    loadDashboardData();
+                } else {
+                    showNotification("Authentication failed. Invalid master key strings.", "error");
+                }
+            } catch (e) {
+                showNotification("Could not communicate login authorization checks.", "error");
+            }
+        }
+
+        function logout() {
+            isAuthenticated = false;
+            document.getElementById('login-username').value = '';
+            document.getElementById('login-password').value = '';
+            showNotification("Session keys flushed. Security gate locked.");
+            switchTab('shop');
         }
 
         function showNotification(message, type = "success") {
