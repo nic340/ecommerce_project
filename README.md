@@ -36,25 +36,71 @@ You can access the deployed project here:
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    Browser["Client Browser Layout"] -->|Port 8000 Static File Routing| FastAPI["FastAPI Core Engine"]
-    FastAPI -->|Fetch / Buy Endpoints| MainDB["PostgreSQL main_db (OLTP)"]
-    ETL["etl_script.py Process Execution"] -->|Extract Stage| MainDB
-    ETL -->|Load Stage Summary Data| ReportingDB["PostgreSQL reporting_db (OLAP)"]
-    FastAPI -->|Analytics Ingestion| ReportingDB
-Database SchemaTransactional Database (main_db)products: id (PK), name, price, stockorders: id (PK), product_id, quantity_ordered, timestampAnalytical Database (reporting_db)dim_products_summaryfact_sales_aggregatestotal_revenue_indexAPI EndpointsMethodEndpointPurposeScopeGET/Serves the decoupled storefront asset context file (index.html)Frontend DeliveryGET/productsPulls core product catalog matrix and stock states from databaseCatalog DataPOST/buy/{id}Processes inventory transactions, managing core schema metricsTransaction EngineEnvironment VariablesProject configuration variables file structure (~/ecommerce_project/.env):Code snippetDATABASE_URL=postgresql://postgres:yoursecurepassword@localhost:5432/main_db
+Our system architecture is designed to separate live storefront transactions from analytical processing. The data flows through the following core components:
+
+* **Client Routing:** The **Client Browser Layout** communicates with the **FastAPI Core Engine** via Port 8000 for static file routing and interface rendering.
+* **Transactional Operations (OLTP):** For live storefront interactions, FastAPI handles "Fetch" and "Buy" endpoints by communicating directly with the **PostgreSQL `main_db`**. This database manages all real-time inventory and user transactions.
+* **ETL Pipeline:** An isolated Python process (`etl_script.py`) manages data extraction. It pulls transactional data from the `main_db`, processes it, and loads the summarized data into a separate **PostgreSQL `reporting_db` (OLAP)**. 
+* **Analytics Ingestion:** To display insights, the FastAPI engine queries the `reporting_db`. This ensures that heavy analytics requests do not impact the performance of the live transactional storefront.
+
+## Database Schema
+### Transactional Database (main_db)
+- products: id (PK), name, price, stock
+- orders: id (PK), product_id, quantity_ordered, timestamp
+### Analytical Database (reporting_db)
+- dim_products_summary
+- fact_sales_aggregates
+- total_revenue_index
+
+## API Endpoints
+| Method | Endpoint | Purpose | Scope |
+| :--- | :--- | :--- | :--- |
+| **GET** | `/` | Serves the decoupled storefront asset context file (`index.html`) | Frontend Delivery |
+| **GET** | `/products` | Pulls core product catalog matrix and stock states from database | Catalog Data |
+| **POST** | `/buy/{id}` | Processes inventory transactions, managing core schema metrics | Transaction Engine |
+
+## Environment Variables
+Project configuration variables file structure (~/ecommerce_project/.env):
+### Code snippet
+```env
+DATABASE_URL=postgresql://postgres:yoursecurepassword@localhost:5432/main_db
 REPORTING_DATABASE_URL=postgresql://postgres:yoursecurepassword@localhost:5432/reporting_db
 SERVER_HOST=0.0.0.0
 SERVER_PORT=8000
-ETL ProcessRun the batch engine execution task manually using your terminal prompt:Bashcd ~/ecommerce_project
+```
+
+## ETL Process
+Run the batch engine execution task manually using your terminal prompt:
+```env
+Bashcd ~/ecommerce_project
 source venv/bin/activate
 python3 etl_script.py
-The ETL processes un-synced inventory lines inside main_db, builds total transaction calculations, manages sales computations, and updates row segments inside reporting_db.Demo FlowOpen the remote cloud deployment link in your desktop browser: http://187.127.118.153:8000/.Inspect the operational stock counter variables displayed inside the product item views.Click the "BUY NOW" command on any inventory card (e.g., Mouse) to execute an active transaction log.Verify the database stock change from the UI state (e.g., Inventory drops from 50 down to 49 items).Open your secondary terminal console panel and execute the automated process loop: python3 etl_script.py.Inspect the live data logs printed on screen confirming successful batch tracking updates.Refresh the separate Analytical views to view calculated sales parameters (₱) updated by the pipeline logic.Verification CommandsExecute these verification tasks inside the virtual terminal workspace to confirm system compliance:Bashpwd
+```
+The ETL processes un-synced inventory lines inside main_db, builds total transaction calculations, manages sales computations, and updates row segments inside reporting_db.
+
+## Demo Flow
+1. Open the remote cloud deployment link in your desktop browser: http://187.127.118.153:8000/.
+2. Inspect the operational stock counter variables displayed inside the product item views.
+3. Click the "BUY NOW" command on any inventory card (e.g., Mouse) to execute an active transaction log.
+4. Verify the database stock change from the UI state (e.g., Inventory drops from 50 down to 49 items).
+5. Open your secondary terminal console panel and execute the automated process loop: python3 etl_script.py.
+6. Inspect the live data logs printed on screen confirming successful batch tracking updates.
+7. Refresh the separate Analytical views to view calculated sales parameters (₱) updated by the pipeline logic.
+
+## Verification Commands
+Execute these verification tasks inside the virtual terminal workspace to confirm system compliance:
+
+```env
+Bashpwd
 
 python3 -m compileall main.py etl_script.py
 
 fuser -k 8000/tcp
 
 python3 -m uvicorn main:app --host 0.0.0.0 --port 8000
-Troubleshooting MatrixBlank Storefront Dashboard Cards: Ensure you are accessing the server domain over its explicit network port assignment (:8000). Clear local browser caches by executing a target hard reload loop via Ctrl + F5.Process Binding Collisions (Address already in use): Execute an immediate system process cleanup task using fuser -k 8000/tcp to release active listeners before deploying new instances.Stagnant Graph Analytics Parameters: Ensure you run the programmatic batch synchronization routine (python3 etl_script.py) in your terminal window after checkout actions to update the analytical schema.
+```
+
+## Troubleshooting Matrix
+- Blank Storefront Dashboard Cards: Ensure you are accessing the server domain over its explicit network port assignment (:8000). Clear local browser caches by executing a target hard reload loop via Ctrl + F5.
+- Process Binding Collisions (Address already in use): Execute an immediate system process cleanup task using fuser -k 8000/tcp to release active listeners before deploying new instances.
+- Stagnant Graph Analytics Parameters: Ensure you run the programmatic batch synchronization routine (python3 etl_script.py) in your terminal window after checkout actions to update the analytical schema.
